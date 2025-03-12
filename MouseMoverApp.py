@@ -2,20 +2,21 @@
 import pyautogui
 import time
 import threading
+from pynput.mouse import Controller, Button
 
 class MouseMoverApp:
     def __init__(self):
         self.is_running = False
         self.move_thread = None
 
-    def move_mouse_every_minute(self):
+    def move_mouse_every_minute(self, milisecond = 299):
         """Di chuyển chuột mỗi phút nếu is_running là True."""
+        mouse = Controller()
         while self.is_running:
-            current_position = pyautogui.position()
-            pyautogui.move(1, 0, duration=0.1)  # Di chuyển sang phải
-            pyautogui.move(-1, 0, duration=0.1)  # Di chuyển về vị trí cũ
-            print(f"Mouse moved at {time.strftime('%H:%M:%S')}")
-            time.sleep(290)
+            mouse.scroll(0, 1)
+            time.sleep(0.001)
+            mouse.scroll(0, -1)
+            time.sleep(milisecond)
 
     def start_moving(self):
         """Bắt đầu di chuyển chuột."""

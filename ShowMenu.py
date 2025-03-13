@@ -1,55 +1,67 @@
 # %%
+import sys
 import requests
-import tkinter as tk
-from tkinter import Label
-from PIL import Image, ImageTk
 from io import BytesIO
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout
+from PySide6.QtGui import QPixmap
+from PIL import Image
 
 # API mẫu trả về danh sách dữ liệu
 API_URL = "https://jsonplaceholder.typicode.com/todos?_limit=6"
-
-# URL ảnh mẫu
 IMAGE_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN0Y_SeJHZINmA_vwcN_rR71JW9wJXegQWiA&s"
 
-# Hàm gửi request đến API và hiển thị dữ liệu
-def fetch_data(root):
-    try:
-        response = requests.get(API_URL)
-        response.raise_for_status()
-        data = response.json()
-        display_data(data, root=root)
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to fetch data: {e}")
+class ShowMenuWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("API Data Viewer with Images")
+        self.setGeometry(100, 100, 800, 300)
 
-# Hàm hiển thị ảnh và thông tin lên giao diện
-def display_data(data_list, root):
-    for idx, data in enumerate(data_list):
-        # Tải ảnh từ URL
-        img_response = requests.get(IMAGE_URL)
-        img_data = img_response.content
-        img = Image.open(BytesIO(img_data))
-        img = img.resize((100, 100))  # Resize ảnh
-        photo = ImageTk.PhotoImage(img)
+        # Layout chính
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
 
-        # Hiển thị ảnh
-        img_label = Label(root, image=photo)
-        img_label.image = photo  # Lưu tham chiếu để tránh bị xóa
-        img_label.grid(row=0, column=idx, padx=10, pady=10)
+        self.fetch_data()
 
-        # Hiển thị thông tin API
-        info_text = f"ID: {data['id']}\nTitle: {data['title']}\nCompleted: {data['completed']}"
-        info_label = Label(root, text=info_text, wraplength=100, justify="center")
-        info_label.grid(row=1, column=idx, padx=10, pady=10)
+    def fetch_data(self):
+        """ Gửi request đến API và hiển thị dữ liệu """
+        try:
+            response = requests.get(API_URL)
+            response.raise_for_status()
+            data = response.json()
+            self.display_data(data)
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to fetch data: {e}")
 
-def show_menu():
-    # Tạo cửa sổ chính
-    root_menu = tk.Tk()
-    root_menu.title("API Data Viewer with Images")
-    root_menu.geometry("800x300")
+    def display_data(self, data_list):
+        """ Hiển thị ảnh và thông tin API lên giao diện """
+        image_layout = QHBoxLayout()
+        text_layout = QHBoxLayout()
 
-    fetch_data(root= root_menu)
+        for data in data_list:
+            # Tải ảnh từ URL
+            img_response = requests.get(IMAGE_URL)
+            img_data = img_response.content
 
-    # Chạy vòng lặp giao diện
-    root_menu.mainloop()
+            # Mở ảnh bằng PIL, resize và chuyển thành QPixmap
+            img = Image.open(BytesIO(img_data))
+            img = img.resize((100, 100))
+            img_qt = QPixmap()
+            img_qt.loadFromData(BytesIO(img_data).read())
+
+            # Hiển thị ảnh
+            img_label = QLabel(self)
+            img_label.setPixmap(img_qt)
+            image_layout.addWidget(img_label)
+
+            # Hiển thị thông tin API
+            info_text = f"ID: {data['id']}\nTitle: {data['title']}\nCompleted: {data['completed']}"
+            info_label = QLabel(info_text, self)
+            info_label.setWordWrap(True)
+            info_label.setFixedWidth(100)  # Giữ văn bản không bị tràn
+            text_layout.addWidget(info_label)
+
+        self.main_layout.addLayout(image_layout)
+        self.main_layout.addLayout(text_layout)
+
 
 

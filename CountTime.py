@@ -8,14 +8,19 @@ AFTERNOON = 3
 
 class TimeCalculator:
     def __init__(self):
-        self.start_time: time = datetime.now().time
+        self.start_time: time = datetime.now().time()
         self.late: timedelta = None
         self.time_type = FULL_DAY
-        self.end_time = None
+        self.end_time: time = None
 
     def set_start_time(self, hour: int, minute: int):
         if 0 <= hour < 24 and 0 <= minute < 60:
-            self.start_time = time(hour, minute)
+            if hour < 7:
+                self.start_time = time(7, 0)
+            elif hour > 18:
+                self.start_time = time(18, 48)
+            else:
+                self.start_time = time(hour, minute)
             print(f"Start time set to: {self.start_time.strftime('%H:%M')}")
         else:
             raise ValueError("Invalid hour or minute. Hour must be between 0-23 and minute between 0-59.")

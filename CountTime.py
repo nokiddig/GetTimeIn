@@ -48,12 +48,16 @@ class TimeCalculator:
         return time(total_minutes // 60, total_minutes % 60)
 
     def process_time_over(self):
+        earliest_time = time(7, 0)
         lastest_time = time(18, 48)
-        if self.end_time > lastest_time:
+        if self.end_time > lastest_time or self.end_time < earliest_time:
             self.end_time = lastest_time
 
     def cal_end_time(self, type=FULL_DAY):
         self.cal_late(type)
+        if type == FULL_DAY:
+            work_hours = 9
+            work_minutes = 48
         if type == MORNING:
             work_hours = 4
             work_minutes = 24
@@ -61,7 +65,7 @@ class TimeCalculator:
             work_hours = 5
             work_minutes = 24
         elif type == AFTERNOON:
-            self.end_time = time(5, 24)
+            self.end_time = time(17, 24)
             return self.end_time.strftime('%H:%M')
         else:
             work_hours = 9

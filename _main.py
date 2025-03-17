@@ -112,10 +112,14 @@ import sys
 class MyWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.width = 160
+        self.height = 80
         self.init_ui()
         self.init_feature()
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet("padding: 0px; margin: 0px;")
+        self.setWindowFlags(self.windowFlags() | Qt.Tool) #hide on taskbar
+        self.setAttribute(Qt.WA_QuitOnClose, True)
 
     def init_ui(self):
         # Hàng 1: 2 Button
@@ -125,6 +129,7 @@ class MyWindow(QWidget):
         row1 = QHBoxLayout()
         row1.addWidget(self.work_mode_btn)
         row1.addWidget(self.scr_mode_btn)
+        row1.setContentsMargins(0,0,0,0)
 
         # Hàng 2: Text lớn
         row2 = QHBoxLayout()
@@ -142,14 +147,13 @@ class MyWindow(QWidget):
 
         # Hàng 3: 2 phần tử text với icon
         row3 = QHBoxLayout()
-        # row3.setSpacing(0)
-        # row3.setContentsMargins(0, 0, 0, 0)
+        row3.setContentsMargins(0, 0, 0, 0)
 
         # Phần tử 1: Icon đến + Text
         icon_start = QLabel()
         icon_start.setPixmap(QIcon("icon/come.png").pixmap(20, 20))  # Load icon
         self.lab_start_time = QLabel("Văn bản với icon đến")
-        self.lab_start_time.setFont(QFont("Arial", 12))
+        self.lab_start_time.setFont(QFont("Arial", 11))
 
         container1 = QHBoxLayout()
         container1.setContentsMargins(0, 0, 0, 0)
@@ -165,7 +169,7 @@ class MyWindow(QWidget):
         icon_end = QLabel()
         icon_end.setPixmap(QIcon("icon/out.png").pixmap(20, 20))  # Load icon
         self.lab_end_time = QLabel("Văn bản với icon đi")
-        self.lab_end_time.setFont(QFont("Arial", 12))
+        self.lab_end_time.setFont(QFont("Arial", 11))
 
         container2 = QHBoxLayout()
         container2.setContentsMargins(0, 0, 0, 0)
@@ -188,7 +192,7 @@ class MyWindow(QWidget):
 
         self.setLayout(layout)
         self.setWindowTitle("Count down")
-        self.setFixedSize(180, 90)
+        self.setFixedSize(self.width, self.height)
 
     #Hàm tính và hiển thị thời gian còn lại
     def update_remaining_time(self):
@@ -295,10 +299,10 @@ class MyWindow(QWidget):
     
     def create_tray_icon(self):
         global window
-        # Tạo icon nhỏ cho System Tray
-        image = Image.new('RGB', (64, 64), color='blue')
-        draw = ImageDraw.Draw(image)
-        draw.rectangle((0, 0, 64, 64), fill="blue")
+        
+        # Sử dụng hình ảnh icon.png thay vì tạo hình chữ nhật màu xanh
+        icon_path = "icon/clock.png"
+        image = Image.open(icon_path)
 
         # Tạo menu cho tray icon
         menu = Menu(
@@ -306,8 +310,8 @@ class MyWindow(QWidget):
             MenuItem("Exit", self.quit_app)
         )
 
-        # Khởi tạo icon với pystray
-        self.tray_icon = Icon("SAT_TimeIn", image, "SAT Time In", menu)
+        # Khởi tạo tray icon với hình ảnh
+        self.tray_icon = Icon("SAT_TimeIn", image, "SAT Time", menu)
         threading.Thread(target=self.tray_icon.run, daemon=True).start()
 
     def quit_app(self):

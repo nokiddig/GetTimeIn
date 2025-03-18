@@ -1,4 +1,5 @@
 *.txt
 /build/
+/dist/
 ShowMenu.ipynb
 ShowMenu.py

@@ -11,9 +11,11 @@ from pystray import Icon, Menu, MenuItem
 from PIL import Image, ImageDraw
 import threading
 from tkinter import messagebox
-from datetime import datetime, timedelta
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
-
+from datetime import datetime, timedelta, time
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QMenu, QMessageBox
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QAction
+from PySide6.QtCore import Qt, QPoint, QTimer
+import sys
 
 # Example usage
 time_calculator = CountTime.TimeCalculator()
@@ -47,6 +49,7 @@ class InputTimeDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Nhập Giờ và Phút")
         self.setFixedSize(180, 120)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         layout = QVBoxLayout()
 
@@ -81,6 +84,11 @@ class InputTimeDialog(QDialog):
             minute = int(self.minute_entry.text())
             print(f"Nhập thành công: {hour} giờ {minute} phút")  # Xử lý dữ liệu tại đây
             submit_time_in(hour, minute)
+            # show message box
+            if (time_calculator.is_late()):
+                QMessageBox.about(self, "Hỏng", f"Bạn đến muộn {time_calculator.late} rồi cưng ạ")
+            else:
+                QMessageBox.about(self, "Tuyệt vời", f"Chúc bạn một ngày làm việc hiệu quả~")
             self.accept()  # Đóng cửa sổ khi nhấn OK
         except ValueError:
             print("Lỗi: Vui lòng nhập số hợp lệ")
@@ -96,7 +104,7 @@ work_modes = ['CẢ NGÀY', 'SÁNG', 'SÁNG TRƯA', 'CHIỀU']
 work_mode_index = 0
 
 # chế độ bật tắt mouse mover
-screen_modes = ["Bật SCR", "Tắt SCR"]
+screen_modes = ["BẬT SCR", "TẮT SCR"]
 screen_mode_index = 0
 
 # Lấy giờ ra về từ chế độ hiện tại
@@ -104,11 +112,6 @@ mode = work_modes[work_mode_index]
 end_time_str = time_calculator.cal_end_time(work_mode_index)
 
 # %%
-from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QMenu
-from PySide6.QtGui import QFont, QIcon, QMouseEvent, QAction
-from PySide6.QtCore import Qt, QPoint, QTimer
-import sys
-
 class MyWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -137,7 +140,7 @@ class MyWindow(QWidget):
         icon_big = QLabel()
         icon_big.setPixmap(QIcon("icon/countdown.png").pixmap(20, 20))  # Icon đi kèm
 
-        self.lab_remain_time = QLabel("Count down")
+        self.lab_remain_time = QLabel("00:00:00")
         self.lab_remain_time.setFont(QFont("Arial", 14, QFont.Bold))
 
         row2.addStretch(1)
@@ -152,7 +155,7 @@ class MyWindow(QWidget):
         # Phần tử 1: Icon đến + Text
         icon_start = QLabel()
         icon_start.setPixmap(QIcon("icon/come.png").pixmap(20, 20))  # Load icon
-        self.lab_start_time = QLabel("Văn bản với icon đến")
+        self.lab_start_time = QLabel("00:00")
         self.lab_start_time.setFont(QFont("Arial", 11))
 
         container1 = QHBoxLayout()
@@ -168,7 +171,7 @@ class MyWindow(QWidget):
         # Phần tử 2: Icon đi + Text
         icon_end = QLabel()
         icon_end.setPixmap(QIcon("icon/out.png").pixmap(20, 20))  # Load icon
-        self.lab_end_time = QLabel("Văn bản với icon đi")
+        self.lab_end_time = QLabel("00:00")
         self.lab_end_time.setFont(QFont("Arial", 11))
 
         container2 = QHBoxLayout()
@@ -195,8 +198,13 @@ class MyWindow(QWidget):
         self.setFixedSize(self.width, self.height)
 
     #Hàm tính và hiển thị thời gian còn lại
-    def update_remaining_time(self):
+    def auto_refresh_ui(self):
         now = datetime.now()
+        #show lunch
+        if now.hour == 11 and now.minute == 30 and now.second == 0:
+            self.lunch_menu()
+        elif now.hour == 17 and now.minute == 0 and now.second == 0:
+            QMessageBox.about(self, "Hi Nghẹo", "Tuyệt vời")
         
         # Thiết lập thời gian ra về theo giờ phút, giữ nguyên ngày hiện tại
         end_time = datetime.strptime(end_time_str, "%H:%M").replace(
@@ -220,10 +228,13 @@ class MyWindow(QWidget):
         self.work_mode_btn.clicked.connect(self.switch_work_mode)
         self.scr_mode_btn.clicked.connect(self.switch_screen_mode)
         self.timer = QTimer(self)  
-        self.timer.timeout.connect(self.update_remaining_time)  # Gán hàm update
+        self.timer.timeout.connect(self.auto_refresh_ui)  # Gán hàm update
         self.timer.start(1000)
         self.create_tray_icon()
     
+    def mouseDoubleClickEvent(self, event: QMouseEvent):
+        print("Double click")
+        self.hide_window()
 
     # Hàm cập nhật chế độ làm việc
     def switch_work_mode(self):
@@ -265,7 +276,7 @@ class MyWindow(QWidget):
 
      # Hiển thị menu chuột phải
     def show_context_menu(self, pos: QPoint):
-        print("Bạn nhấn chuột phải")
+        print("right click")
         menu = QMenu(self)
 
         # Các tùy chọn
@@ -288,7 +299,9 @@ class MyWindow(QWidget):
 
         # Hiển thị menu
         menu.exec(pos)
+        
     def lunch_menu(self):
+        lunch_menu = ShowMenu.ShowMenuWindow()
         lunch_menu.show()
     
     def hide_window(self):
@@ -311,7 +324,7 @@ class MyWindow(QWidget):
         )
 
         # Khởi tạo tray icon với hình ảnh
-        self.tray_icon = Icon("SAT_TimeIn", image, "SAT Time", menu)
+        self.tray_icon = Icon("SAT_Input", image, "SAT Input", menu)
         threading.Thread(target=self.tray_icon.run, daemon=True).start()
 
     def quit_app(self):
@@ -319,7 +332,6 @@ class MyWindow(QWidget):
         QApplication.instance().quit()  # Thoát ứng dụng
 
 app = QApplication(sys.argv)
-lunch_menu = ShowMenu.ShowMenuWindow()
 window = MyWindow()
 window.show()
 app.exec()

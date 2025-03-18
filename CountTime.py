@@ -73,5 +73,8 @@ class TimeCalculator:
         self.end_time = self.add_time(self.start_time, work_hours, work_minutes)
         self.process_time_over()
         return self.end_time.strftime('%H:%M')
+    
+    def is_late(self):
+        return self.late.total_seconds() > 0
 
 

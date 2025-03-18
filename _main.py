@@ -112,27 +112,39 @@ mode = work_modes[work_mode_index]
 end_time_str = time_calculator.cal_end_time(work_mode_index)
 
 # %%
-class MyWindow(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.width = 160
-        self.height = 80
+        self.width = 120
+        self.height = 60
         self.init_ui()
         self.init_feature()
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setStyleSheet("padding: 0px; margin: 0px;")
+        self.setStyleSheet("padding: 0px; margin: 0px; background-color: white;")
         self.setWindowFlags(self.windowFlags() | Qt.Tool) #hide on taskbar
         self.setAttribute(Qt.WA_QuitOnClose, True)
+        # Lấy kích thước màn hình chính
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+
+        # Tính toán vị trí góc dưới phải
+        x = screen_geometry.width() - self.size().width()
+        y = screen_geometry.height() - self.size().height() - 30
+        self.move(x, y)  # Di chuyển widget đến vị trí tính toán
 
     def init_ui(self):
         # Hàng 1: 2 Button
         self.work_mode_btn = QPushButton(work_modes[work_mode_index])
         self.scr_mode_btn = QPushButton(screen_modes[screen_mode_index])
+        btn_font = self.work_mode_btn.font()
+        btn_font.setPointSize(8) 
+        self.work_mode_btn.setFont(btn_font)
+        self.scr_mode_btn.setFont(btn_font)
 
         row1 = QHBoxLayout()
+        row1.setContentsMargins(0,0,0,0)
         row1.addWidget(self.work_mode_btn)
         row1.addWidget(self.scr_mode_btn)
-        row1.setContentsMargins(0,0,0,0)
 
         # Hàng 2: Text lớn
         row2 = QHBoxLayout()
@@ -154,9 +166,9 @@ class MyWindow(QWidget):
 
         # Phần tử 1: Icon đến + Text
         icon_start = QLabel()
-        icon_start.setPixmap(QIcon("icon/come.png").pixmap(20, 20))  # Load icon
+        icon_start.setPixmap(QIcon("icon/come.png").pixmap(15, 20))  # Load icon
         self.lab_start_time = QLabel("00:00")
-        self.lab_start_time.setFont(QFont("Arial", 11))
+        self.lab_start_time.setFont(QFont("Arial", 10))
 
         container1 = QHBoxLayout()
         container1.setContentsMargins(0, 0, 0, 0)
@@ -170,9 +182,9 @@ class MyWindow(QWidget):
 
         # Phần tử 2: Icon đi + Text
         icon_end = QLabel()
-        icon_end.setPixmap(QIcon("icon/out.png").pixmap(20, 20))  # Load icon
+        icon_end.setPixmap(QIcon("icon/out.png").pixmap(15, 20))  # Load icon
         self.lab_end_time = QLabel("00:00")
-        self.lab_end_time.setFont(QFont("Arial", 11))
+        self.lab_end_time.setFont(QFont("Arial", 10))
 
         container2 = QHBoxLayout()
         container2.setContentsMargins(0, 0, 0, 0)
@@ -189,12 +201,12 @@ class MyWindow(QWidget):
 
         # Layout chính
         layout = QVBoxLayout()
+        layout.setContentsMargins(1, 1, 1, 1)
         layout.addLayout(row1)
         layout.addLayout(row2)
         layout.addLayout(row3)
 
         self.setLayout(layout)
-        self.setWindowTitle("Count down")
         self.setFixedSize(self.width, self.height)
 
     #Hàm tính và hiển thị thời gian còn lại
@@ -299,7 +311,7 @@ class MyWindow(QWidget):
 
         # Hiển thị menu
         menu.exec(pos)
-        
+
     def lunch_menu(self):
         lunch_menu = ShowMenu.ShowMenuWindow()
         lunch_menu.show()
@@ -332,7 +344,7 @@ class MyWindow(QWidget):
         QApplication.instance().quit()  # Thoát ứng dụng
 
 app = QApplication(sys.argv)
-window = MyWindow()
+window = MainWindow()
 window.show()
 app.exec()
 

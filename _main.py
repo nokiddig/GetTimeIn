@@ -5,21 +5,21 @@
 # os.system("pip install -r _requirements.txt")
 
 # %%
-import CountTime, MouseMoverApp, SalaryCal, ShowMenu
-import tkinter as tk
-from pystray import Icon, Menu, MenuItem
-from PIL import Image, ImageDraw
+import CountTime, MouseMoverApp, SalaryCal, ShowMenu, ImageBase64
+
 import threading
+import base64, io
+from PIL import Image
 from tkinter import messagebox
+from pystray import Icon, Menu, MenuItem
 from datetime import datetime, timedelta, time
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QMenu, QMessageBox
-from PySide6.QtGui import QFont, QIcon, QMouseEvent, QAction
 from PySide6.QtCore import Qt, QPoint, QTimer
-import sys
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QAction, QPixmap
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QMenu, QMessageBox
+import sys, os
 
 # Example usage
 time_calculator = CountTime.TimeCalculator()
-print(time_calculator.cal_end_time(CountTime.FULL_DAY))
 print (time_calculator.late)
 
 #==========
@@ -112,6 +112,19 @@ mode = work_modes[work_mode_index]
 end_time_str = time_calculator.cal_end_time(work_mode_index)
 
 # %%
+def get_icon(imageBase64):
+    image_data = base64.b64decode(imageBase64)  # Chuyển base64 sang dạng binary
+    image = Image.open(io.BytesIO(image_data))  # Load ảnh bằng PIL
+
+    # Chuyển từ PIL Image sang QPixmap
+    qimage = image.toqimage()
+    pixmap = QPixmap.fromImage(qimage)
+
+    # Tạo QIcon từ pixmap
+    icon = QIcon(pixmap)
+    return icon
+
+# %%
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -149,14 +162,15 @@ class MainWindow(QWidget):
         # Hàng 2: Text lớn
         row2 = QHBoxLayout()
         
-        icon_big = QLabel()
-        icon_big.setPixmap(QIcon("icon/countdown.png").pixmap(20, 20))  # Icon đi kèm
+        lab_img_countdown = QLabel()
+        icon_countdown = get_icon(ImageBase64.COUNTDOWN_BASE64)
+        lab_img_countdown.setPixmap(icon_countdown.pixmap(20, 20))  # Icon đi kèm
 
         self.lab_remain_time = QLabel("00:00:00")
         self.lab_remain_time.setFont(QFont("Arial", 14, QFont.Bold))
 
         row2.addStretch(1)
-        row2.addWidget(icon_big)
+        row2.addWidget(lab_img_countdown)
         row2.addWidget(self.lab_remain_time)
         row2.addStretch(1)
 
@@ -165,15 +179,16 @@ class MainWindow(QWidget):
         row3.setContentsMargins(0, 0, 0, 0)
 
         # Phần tử 1: Icon đến + Text
-        icon_start = QLabel()
-        icon_start.setPixmap(QIcon("icon/come.png").pixmap(15, 20))  # Load icon
+        lab_img_start = QLabel()
+        icon_start = get_icon(ImageBase64.COME_BASE64)
+        lab_img_start.setPixmap(icon_start.pixmap(15, 20))  # Load icon
         self.lab_start_time = QLabel("00:00")
         self.lab_start_time.setFont(QFont("Arial", 10))
 
         container1 = QHBoxLayout()
         container1.setContentsMargins(0, 0, 0, 0)
         container1.addStretch(1)
-        container1.addWidget(icon_start)
+        container1.addWidget(lab_img_start)
         container1.addWidget(self.lab_start_time)
         container1.addStretch(1)
 
@@ -181,15 +196,16 @@ class MainWindow(QWidget):
         widget1.setLayout(container1)
 
         # Phần tử 2: Icon đi + Text
-        icon_end = QLabel()
-        icon_end.setPixmap(QIcon("icon/out.png").pixmap(15, 20))  # Load icon
+        lab_img_out = QLabel()
+        icon_out = get_icon(ImageBase64.OUT_BASE64)
+        lab_img_out.setPixmap(icon_out.pixmap(15, 20))  # Load icon
         self.lab_end_time = QLabel("00:00")
         self.lab_end_time.setFont(QFont("Arial", 10))
 
         container2 = QHBoxLayout()
         container2.setContentsMargins(0, 0, 0, 0)
         container2.addStretch(1)
-        container2.addWidget(icon_end)
+        container2.addWidget(lab_img_out)
         container2.addWidget(self.lab_end_time)
         container2.addStretch(1)
 

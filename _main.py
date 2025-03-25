@@ -15,7 +15,7 @@ from pystray import Icon, Menu, MenuItem
 from datetime import datetime, timedelta, time
 from PySide6.QtCore import Qt, QPoint, QTimer
 from PySide6.QtGui import QFont, QIcon, QMouseEvent, QAction, QPixmap
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QMenu, QMessageBox, QToolTip
 import sys, os
 
 # Example usage
@@ -133,16 +133,21 @@ class MainWindow(QWidget):
         self.init_ui()
         self.init_feature()
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setStyleSheet("padding: 0px; margin: 0px; background-color: white;")
+        self.setStyleSheet("padding: 0px; margin: 0px;")
         self.setWindowFlags(self.windowFlags() | Qt.Tool) #hide on taskbar
         self.setAttribute(Qt.WA_QuitOnClose, True)
+        self.reset_position()       
+
+    def reset_position(self):
         # Lấy kích thước màn hình chính
         screen = QApplication.primaryScreen()
         screen_geometry = screen.geometry()
+        avai_geometry = screen.availableGeometry()
+        taskbar_height = screen_geometry.height() - avai_geometry.height()
 
         # Tính toán vị trí góc dưới phải
         x = screen_geometry.width() - self.size().width()
-        y = screen_geometry.height() - self.size().height() - 30
+        y = screen_geometry.height() - self.size().height() - taskbar_height
         self.move(x, y)  # Di chuyển widget đến vị trí tính toán
 
     def init_ui(self):
@@ -225,6 +230,9 @@ class MainWindow(QWidget):
         self.setLayout(layout)
         self.setFixedSize(self.width, self.height)
 
+        QToolTip.setFont(self.font())
+        self.setAttribute(Qt.WidgetAttribute.WA_AlwaysShowToolTips)
+
     #Hàm tính và hiển thị thời gian còn lại
     def auto_refresh_ui(self):
         now = datetime.now()
@@ -259,6 +267,18 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.auto_refresh_ui)  # Gán hàm update
         self.timer.start(1000)
         self.create_tray_icon()
+    
+
+    def enterEvent(self, event):
+        print("Hover")
+        today = datetime.today().date()  # Lấy ngày hiện tại
+        week = today.isocalendar()[1]
+        info = f"Date: {today} \nWeek: W{week} \nLate: {time_calculator.late}"
+        print(info)
+        self.setToolTip(info)
+    
+    def leaveEvent(self, event):
+        return super().leaveEvent(event)
     
     def mouseDoubleClickEvent(self, event: QMouseEvent):
         print("Double click")
@@ -311,17 +331,20 @@ class MainWindow(QWidget):
         action_input_time_in = QAction("Input Time In", self)
         action_lunch_menu = QAction("Lunch Menu", self)
         action_hide_window = QAction("Hide Window", self)
-        action_quit_app = QAction("Quit App", self)
+        action_reset_pos = QAction("Reset Pos", self)
+        action_quit_app = QAction("Quit", self)
 
         # Gán sự kiện
         action_input_time_in.triggered.connect(input_time_in)
         action_lunch_menu.triggered.connect(self.lunch_menu)
         action_hide_window.triggered.connect(self.hide_window)
+        action_reset_pos.triggered.connect(self.reset_position)
         action_quit_app.triggered.connect(self.quit_app)
 
         # Thêm vào menu
         menu.addAction(action_input_time_in)
         menu.addAction(action_lunch_menu)
+        menu.addAction(action_reset_pos)
         menu.addAction(action_hide_window)
         menu.addAction(action_quit_app)
 
@@ -329,7 +352,6 @@ class MainWindow(QWidget):
         menu.exec(pos)
 
     def lunch_menu(self):
-        lunch_menu = ShowMenu.ShowMenuWindow()
         lunch_menu.show()
     
     def hide_window(self):
@@ -340,11 +362,9 @@ class MainWindow(QWidget):
     
     def create_tray_icon(self):
         global window
-        
-        # Sử dụng hình ảnh icon.png thay vì tạo hình chữ nhật màu xanh
-        icon_path = "icon/clock.png"
-        image = Image.open(icon_path)
 
+        image_data = base64.b64decode(ImageBase64.CLOCK_BASE64)  # Chuyển base64 sang dạng binary
+        image = Image.open(io.BytesIO(image_data))
         # Tạo menu cho tray icon
         menu = Menu(
             MenuItem("Show", self.show_app),
@@ -361,6 +381,7 @@ class MainWindow(QWidget):
 
 app = QApplication(sys.argv)
 window = MainWindow()
+lunch_menu = ShowMenu.ShowMenuWindow()
 window.show()
 app.exec()
 
